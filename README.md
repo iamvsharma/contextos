@@ -4,13 +4,13 @@ A production-ready NLP text preprocessing platform with pipeline builder, datase
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS |
-| Backend | FastAPI (Python 3.11) |
-| NLP/ML | spaCy, HuggingFace Transformers, TextBlob |
-| Database | MongoDB (optional), Redis (optional) |
-| Deployment | Docker, Vercel (frontend), Render/AWS (backend) |
+| Layer      | Technology                                        |
+| ---------- | ------------------------------------------------- |
+| Frontend   | Next.js 14 (App Router), TypeScript, Tailwind CSS |
+| Backend    | FastAPI (Python 3.11)                             |
+| NLP/ML     | spaCy, HuggingFace Transformers, TextBlob         |
+| Database   | MongoDB (optional), Redis (optional)              |
+| Deployment | Docker, Vercel (frontend), Render/AWS (backend)   |
 
 ## Features
 
@@ -83,15 +83,15 @@ docker-compose up --build
 
 ## API Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/api/preprocess` | Execute pipeline on text |
-| POST | `/api/insights` | Generate text insights |
-| POST | `/api/social/analyze` | Analyze social media text |
-| POST | `/api/dataset/upload` | Upload CSV/JSON dataset |
-| POST | `/api/dataset/process` | Process dataset with pipeline |
-| GET  | `/api/dataset/status/{id}` | Check job status |
-| GET  | `/api/dataset/download/{id}` | Download processed dataset |
+| Method | Path                           | Description                   |
+| ------ | ------------------------------ | ----------------------------- |
+| POST   | `/api/preprocess`            | Execute pipeline on text      |
+| POST   | `/api/insights`              | Generate text insights        |
+| POST   | `/api/social/analyze`        | Analyze social media text     |
+| POST   | `/api/dataset/upload`        | Upload CSV/JSON dataset       |
+| POST   | `/api/dataset/process`       | Process dataset with pipeline |
+| GET    | `/api/dataset/status/{id}`   | Check job status              |
+| GET    | `/api/dataset/download/{id}` | Download processed dataset    |
 
 ## Deployment
 
@@ -113,7 +113,3 @@ docker build -t nlp-backend ./backend
 docker tag nlp-backend registry/your-image
 docker push registry/your-image
 ```
-
-## License
-
-MIT
