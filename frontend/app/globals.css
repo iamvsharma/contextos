@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  html {
+    background-color: #fafafa;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-canvas-soft text-ink font-sans text-body antialiased;
+    font-feature-settings: "ss01", "ss02";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Headings sentence-case and weight 600 (semibold) display ceiling per DESIGN.md */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-ink font-sans font-semibold text-wrap;
+    text-wrap: balance;
+  }
+
+  /* letter spacing negative tracking per typography hierarchy in DESIGN.md */
+  h1 {
+    @apply text-display-xl;
+  }
+  h2 {
+    @apply text-display-lg;
+  }
+  h3 {
+    @apply text-display-md;
+  }
+  h4 {
+    @apply text-display-sm;
+  }
+
+  a {
+    @apply text-link no-underline;
+  }
+  a:hover {
+    @apply text-link-deep underline;
+  }
+
+  /* Selection style from DESIGN.md */
+  ::selection {
+    background-color: #171717;
+    color: #f2f2f2;
+  }
+
+  /* Vercel standard focus rings */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  button:focus-visible {
+    outline: none;
+    @apply ring-2 ring-black ring-offset-2;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply text-caption-mono font-mono uppercase tracking-[0.06em] text-mute font-normal;
+  }
+
+  /* Buttons */
+  .button-primary {
+    @apply bg-primary text-on-primary text-button-lg font-medium rounded-pill px-6 h-12 inline-flex items-center justify-center transition-colors hover:bg-black/90 active:bg-black/80 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .button-secondary {
+    @apply bg-canvas text-ink text-button-lg font-medium rounded-pill px-6 h-12 inline-flex items-center justify-center border border-hairline transition-colors hover:bg-canvas-soft active:bg-canvas-soft-2 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .button-primary-sm {
+    @apply bg-primary text-on-primary text-button-md font-medium rounded-pill px-4 h-9 inline-flex items-center justify-center transition-colors hover:bg-black/90 active:bg-black/80 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .button-secondary-sm {
+    @apply bg-canvas text-ink text-button-md font-medium rounded-pill px-4 h-9 inline-flex items-center justify-center border border-hairline transition-colors hover:bg-canvas-soft active:bg-canvas-soft-2 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .tab-ghost {
+    @apply bg-canvas text-ink text-body-sm font-normal rounded-pill px-4 py-1.5 inline-flex items-center justify-center transition-colors hover:bg-canvas-soft active:bg-canvas-soft-2;
+  }
+  .icon-button-circular {
+    @apply bg-canvas text-ink border border-hairline rounded-full w-8 h-8 inline-flex items-center justify-center transition-colors hover:bg-canvas-soft active:bg-canvas-soft-2;
+  }
+
+  /* Nav CTAs */
+  .nav-cta-signup {
+    @apply bg-primary text-on-primary text-body-sm-strong font-medium rounded-sm px-3 h-7 inline-flex items-center justify-center transition-colors hover:bg-black/90;
+  }
+  .nav-cta-login {
+    @apply bg-canvas text-ink text-body-sm-strong font-medium rounded-sm px-3 h-7 inline-flex items-center justify-center transition-colors hover:bg-canvas-soft;
+  }
+  .nav-cta-ask-ai {
+    @apply bg-canvas text-ink border border-hairline text-body-sm-strong font-medium rounded-sm px-3 h-7 inline-flex items-center justify-center transition-colors hover:bg-canvas-soft-2;
+  }
+
+  /* Cards & Containers */
+  .card-marketing {
+    @apply bg-canvas text-ink rounded-md p-6 border border-hairline shadow-[0px_1px_1px_rgba(0,0,0,0.02),0px_2px_2px_rgba(0,0,0,0.04)];
+  }
+  .card-marketing-large {
+    @apply bg-canvas text-ink rounded-lg p-8 border border-hairline shadow-[0px_2px_2px_rgba(0,0,0,0.04),0px_8px_16px_-4px_rgba(0,0,0,0.04)];
+  }
+  .card-soft {
+    @apply bg-canvas-soft text-ink rounded-md p-6 border border-hairline;
+  }
+  .template-card {
+    @apply bg-canvas text-ink rounded-md p-4 border border-hairline transition-colors hover:bg-canvas-soft;
+  }
+  .code-editor-mockup {
+    @apply bg-primary text-on-primary text-code font-mono rounded-md p-6;
+  }
+  .pricing-card {
+    @apply bg-canvas text-ink rounded-lg p-8 border border-hairline shadow-[0px_2px_2px_rgba(0,0,0,0.04),0px_8px_16px_-4px_rgba(0,0,0,0.04)];
+  }
+  .pricing-card-featured {
+    @apply bg-primary text-on-primary rounded-lg p-8 border border-transparent shadow-[0px_2px_2px_rgba(0,0,0,0.04),0px_8px_16px_-4px_rgba(0,0,0,0.04)];
+  }
+
+  /* Forms */
+  .form-input {
+    @apply bg-canvas text-ink border border-hairline text-body-sm rounded-sm px-3 h-10 w-full focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2;
+  }
+  .form-input-sm {
+    @apply bg-canvas text-ink border border-hairline text-body-sm rounded-sm px-3 h-8 w-full focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2;
+  }
+  .form-input-lg {
+    @apply bg-canvas text-ink border border-hairline text-body-md rounded-sm px-4 h-12 w-full focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2;
+  }
+
+  /* Badges & Inline Elements */
+  .badge-secondary {
+    @apply bg-canvas-soft text-body text-caption rounded-full px-2 py-0.5 border border-hairline;
+  }
+  .banner-marketing {
+    @apply bg-canvas-soft text-body text-body-sm rounded-full px-3 py-1 border border-hairline inline-flex items-center gap-1.5;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
