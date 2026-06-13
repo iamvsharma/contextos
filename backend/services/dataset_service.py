@@ -3,6 +3,7 @@ import json
 import uuid
 import pandas as pd
 import io
+import datetime
 from typing import Any, Optional
 from services.preprocessor import STEP_FUNCTIONS
 from services.storage.minio_client import minio_client
@@ -41,7 +42,16 @@ class DatasetService:
             '4,"Not bad, but could be better. Delivery was late though.",3,Electronics\n'
             '5,"Excellent quality 👍 highly recommended to everyone.",5,Home\n'
         ).encode("utf-8")
-        await self._process_and_save_dataset("default-customer-reviews", "Customer_Reviews.csv", csv1, "text/csv", is_default=True)
+        await self._process_and_save_dataset(
+            "default-customer-reviews", 
+            "Customer_Reviews.csv", 
+            csv1, 
+            "text/csv", 
+            is_default=True,
+            description="Customer feedback and ratings dataset for testing Sentiment Analysis and text preprocessing.",
+            tags=["sentiment", "feedback", "reviews"],
+            category="E-commerce"
+        )
 
         # 2. Twitter Data JSON
         json2 = json.dumps([
@@ -49,7 +59,16 @@ class DatasetService:
             {"tweet_id": 2, "tweet_text": "Why is data cleaning so tedious? Ugh. 😭", "likes": 12},
             {"tweet_id": 3, "tweet_text": "Check out this new NLP preprocessor. Pretty neat. www.textprep.pro", "likes": 25}
         ]).encode("utf-8")
-        await self._process_and_save_dataset("default-twitter-data", "Twitter_Data.json", json2, "application/json", is_default=True)
+        await self._process_and_save_dataset(
+            "default-twitter-data", 
+            "Twitter_Data.json", 
+            json2, 
+            "application/json", 
+            is_default=True,
+            description="Live Twitter updates containing popular hashtags, emoji usages, and counts of likes.",
+            tags=["social media", "tweets", "emojis"],
+            category="Social Media"
+        )
 
         # 3. Reddit Comments CSV
         csv3 = (
@@ -58,7 +77,16 @@ class DatasetService:
             '2,"This preprocessing tool makes it so easy to remove emojis and links.",8,r/dataengineering\n'
             '3,"Can someone suggest a good lemmatizer for python?",3,r/learnpython\n'
         ).encode("utf-8")
-        await self._process_and_save_dataset("default-reddit-comments", "Reddit_Comments.csv", csv3, "text/csv", is_default=True)
+        await self._process_and_save_dataset(
+            "default-reddit-comments", 
+            "Reddit_Comments.csv", 
+            csv3, 
+            "text/csv", 
+            is_default=True,
+            description="Subreddit conversations dataset containing comments, scores, and subreddit designations.",
+            tags=["comments", "reddit", "discussion"],
+            category="Social Media"
+        )
 
     async def get_dataset(self, file_id: str) -> Optional[dict[str, Any]]:
         db = await get_db()
@@ -75,7 +103,17 @@ class DatasetService:
             file_id, file.filename, contents, file.content_type or "application/octet-stream"
         )
 
-    async def _process_and_save_dataset(self, file_id: str, filename: str, contents: bytes, content_type: str, is_default: bool = False) -> dict[str, Any]:
+    async def _process_and_save_dataset(
+        self, 
+        file_id: str, 
+        filename: str, 
+        contents: bytes, 
+        content_type: str, 
+        is_default: bool = False,
+        description: str = "",
+        tags: list[str] = None,
+        category: str = ""
+    ) -> dict[str, Any]:
         ext = os.path.splitext(filename)[1].lower()
         object_name = f"{file_id}{ext}"
         
@@ -102,7 +140,7 @@ class DatasetService:
         except Exception as e:
             df = pd.DataFrame([{"error": f"Failed to parse file: {str(e)}"}])
 
-        # Generate summary
+        # Generate summary & Column Statistics
         missing_counts = df.isnull().sum().to_dict()
         total_cells = df.size
         total_missing = df.isnull().sum().sum()
@@ -110,6 +148,31 @@ class DatasetService:
         
         columns = [str(col) for col in df.columns]
         
+        columns_metadata = {}
+        for col in df.columns:
+            col_str = str(col)
+            null_cnt = int(df[col].isnull().sum())
+            uniq_cnt = int(df[col].nunique())
+            dt = str(df[col].dtype)
+            
+            meta = {
+                "data_type": dt,
+                "null_count": null_cnt,
+                "unique_count": uniq_cnt,
+            }
+            
+            if pd.api.types.is_numeric_dtype(df[col]):
+                try:
+                    col_clean = df[col].dropna()
+                    if not col_clean.empty:
+                        meta["min"] = round(float(col_clean.min()), 4)
+                        meta["max"] = round(float(col_clean.max()), 4)
+                        meta["mean"] = round(float(col_clean.mean()), 4)
+                except Exception:
+                    pass
+            
+            columns_metadata[col_str] = meta
+
         # Prepare head rows for preview
         sample_rows = df.head(10).fillna("").to_dict(orient="records")
         clean_samples = []
@@ -131,6 +194,7 @@ class DatasetService:
         summary = {
             "rows": len(df),
             "columns": columns,
+            "columns_metadata": columns_metadata,
             "missing_values_percent": f"{missing_percent}%",
             "missing_values_by_column": {str(k): int(v) for k, v in missing_counts.items()},
             "file_size": f"{size_mb} MB" if size_mb >= 0.01 else "<0.01 MB",
@@ -146,6 +210,11 @@ class DatasetService:
             "summary": summary,
             "status": "uploaded",
             "is_default": is_default,
+            "uploaded_by": "System" if is_default else "Karan",
+            "created_at": datetime.datetime.utcnow().isoformat() + "Z",
+            "description": description,
+            "tags": tags or [],
+            "category": category,
             "config": {
                 "selected_column": columns[0] if columns else "",
                 "header_row": True,
@@ -173,6 +242,7 @@ class DatasetService:
         dataset_doc["_id"] = file_id
         return dataset_doc
 
+
     async def update_dataset_config(self, file_id: str, config: dict[str, Any]) -> bool:
         db = await get_db()
         result = await db.datasets.update_one(
@@ -183,6 +253,47 @@ class DatasetService:
             }}
         )
         return result.modified_count > 0
+
+    async def update_dataset_metadata(self, file_id: str, description: str, tags: list[str], category: str) -> bool:
+        db = await get_db()
+        result = await db.datasets.update_one(
+            {"file_id": file_id},
+            {"$set": {
+                "description": description,
+                "tags": tags,
+                "category": category
+            }}
+        )
+        return result.modified_count > 0
+
+    async def delete_dataset(self, file_id: str) -> bool:
+        db = await get_db()
+        dataset = await db.datasets.find_one({"file_id": file_id})
+        if not dataset:
+            return False
+        
+        # Remove main file from MinIO
+        try:
+            object_name = dataset.get("object_name")
+            if object_name:
+                minio_client.remove_object("datasets", object_name)
+        except Exception as e:
+            print(f"Error removing object from MinIO: {e}")
+            
+        # Also remove processed file if exists
+        processed_file_id = dataset.get("processed_file_id")
+        if processed_file_id:
+            try:
+                processed_dataset = await db.datasets.find_one({"file_id": processed_file_id})
+                if processed_dataset:
+                    minio_client.remove_object("datasets", processed_dataset["object_name"])
+                    await db.datasets.delete_one({"file_id": processed_file_id})
+            except Exception as e:
+                print(f"Error removing processed object: {e}")
+
+        # Delete from MongoDB
+        result = await db.datasets.delete_one({"file_id": file_id})
+        return result.deleted_count > 0
 
     async def process_dataset(
         self, file_id: str, column: str, steps: list[dict[str, Any]]

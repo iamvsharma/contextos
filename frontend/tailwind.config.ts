@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss"
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -115,6 +116,18 @@ const config: Config = {
       },
       maxWidth: {
         content: "1280px",
+      },
+      colors: {
+        dark: {
+          canvas: "#0a0a0a",
+          "canvas-soft": "#111111",
+          "canvas-soft-2": "#1a1a1a",
+          ink: "#ededed",
+          body: "#a1a1a1",
+          mute: "#666666",
+          hairline: "#2a2a2a",
+          "hairline-strong": "#444444",
+        },
       },
     },
   },

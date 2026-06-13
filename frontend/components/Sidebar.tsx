@@ -1,77 +1,32 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useThemeStore } from "@/store/useThemeStore"
+import { topicConfigs, TopicId, getTopicConfig } from "@/lib/sidebar-config"
 import {
-  LayoutDashboard,
-  GitBranch,
-  Database,
-  Smile,
-  Terminal,
-  Bookmark,
-  HardDrive,
-  BarChart3,
-  Clock,
-  GitCompare,
-  Settings,
-  Sparkles,
   ChevronDown,
-  ChevronsUpDown,
   ChevronsLeft,
   ChevronsRight,
+  Sparkles,
+  Settings,
 } from "lucide-react"
-
-interface SidebarItem {
-  href: string
-  label: string
-  icon: any
-}
-
-interface SidebarGroup {
-  title: string
-  items: SidebarItem[]
-}
-
-const navigationGroups: SidebarGroup[] = [
-  {
-    title: "Develop",
-    items: [
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/pipeline", label: "Pipeline Builder", icon: GitBranch },
-      { href: "/playground", label: "API Playground", icon: Terminal },
-    ],
-  },
-  {
-    title: "Data & Social",
-    items: [
-      { href: "/dataset", label: "Dataset Mode", icon: Database },
-      { href: "/social", label: "Social Media Mode", icon: Smile },
-    ],
-  },
-  {
-    title: "Resources",
-    items: [
-      { href: "#saved", label: "Saved Pipelines", icon: Bookmark },
-      { href: "/datasets", label: "Datasets", icon: HardDrive },
-      { href: "#reports", label: "Reports", icon: BarChart3 },
-      { href: "#history", label: "History", icon: Clock },
-      { href: "#compare", label: "Compare", icon: GitCompare },
-    ],
-  },
-  {
-    title: "Management",
-    items: [
-      { href: "#settings", label: "Settings", icon: Settings },
-    ],
-  },
-]
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { sidebarCollapsed: isCollapsed, setSidebarCollapsed, toggleSidebarCollapsed: toggleCollapse } = useThemeStore()
+  const {
+    sidebarCollapsed: isCollapsed,
+    setSidebarCollapsed,
+    toggleSidebarCollapsed: toggleCollapse,
+    selectedTopic,
+    setSelectedTopic,
+  } = useThemeStore()
+
+  const [isTopicSelectorOpen, setIsTopicSelectorOpen] = useState(false)
+  const currentTopic = getTopicConfig(selectedTopic)
+  const topicSelectorRef = useRef<HTMLDivElement>(null)
 
   // Load configuration from local storage on mount
   useEffect(() => {
@@ -79,7 +34,32 @@ export function Sidebar() {
     if (saved === "true") {
       setSidebarCollapsed(true)
     }
-  }, [setSidebarCollapsed])
+    const savedTopic = localStorage.getItem("selected-topic") as TopicId | null
+    if (savedTopic && topicConfigs.some((t) => t.id === savedTopic)) {
+      setSelectedTopic(savedTopic)
+    }
+  }, [setSidebarCollapsed, setSelectedTopic])
+
+  // Close topic selector when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        topicSelectorRef.current &&
+        !topicSelectorRef.current.contains(event.target as Node)
+      ) {
+        setIsTopicSelectorOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const handleTopicChange = (topicId: TopicId) => {
+    setSelectedTopic(topicId)
+    localStorage.setItem("selected-topic", topicId)
+    setIsTopicSelectorOpen(false)
+  }
 
   return (
     <aside
@@ -90,26 +70,150 @@ export function Sidebar() {
       aria-label="Main Navigation"
     >
       <div className="flex flex-col flex-1 overflow-y-auto">
-        {/* Workspace Switcher Selector + Top Hide/Show Button */}
+        {/* Topic Selector + Top Hide/Show Button */}
         <div className={cn("px-4 py-3 border-b border-hairline flex items-center justify-between gap-2", isCollapsed && "px-2.5 justify-center flex-col gap-3")}>
-          <div className={cn("flex items-center gap-2.5 min-w-0 select-none", isCollapsed ? "justify-center" : "flex-1")}>
-            <div className="w-6 h-6 bg-primary rounded-sm flex items-center justify-center text-on-primary font-mono font-semibold text-xs shrink-0" aria-hidden="true">
-              TP
-            </div>
-            {!isCollapsed && (
-              <div className="flex flex-col min-w-0">
-                <span className="text-[13px] font-medium text-ink truncate leading-normal">
-                  TextPrep Pro Workspace
-                </span>
-                <span className="text-[10px] text-mute font-mono leading-none">
-                  Hobby Plan
-                </span>
+          <div ref={topicSelectorRef} className={cn("flex items-center gap-2.5 min-w-0 select-none relative", isCollapsed ? "justify-center" : "flex-1")}>
+            {!isCollapsed ? (
+              <div className="relative flex-1">
+                <button
+                  onClick={() => setIsTopicSelectorOpen(!isTopicSelectorOpen)}
+                  className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-canvas-soft border border-transparent hover:border-hairline transition-all text-left"
+                  aria-label="Select topic"
+                  aria-expanded={isTopicSelectorOpen}
+                >
+                  <div className="w-6 h-6 bg-primary rounded-sm flex items-center justify-center text-on-primary shrink-0">
+                    {currentTopic && <currentTopic.icon size={14} />}
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-[13px] font-medium text-ink truncate leading-normal">
+                      {currentTopic?.label || "Select Topic"}
+                    </span>
+                    <span className="text-[10px] text-mute font-mono leading-none truncate">
+                      {currentTopic?.description || "Choose a topic"}
+                    </span>
+                  </div>
+                  <ChevronDown
+                    size={12}
+                    className={cn(
+                      "text-mute transition-transform shrink-0",
+                      isTopicSelectorOpen && "rotate-180"
+                    )}
+                  />
+                </button>
+
+                {/* Topic Dropdown */}
+                {isTopicSelectorOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-canvas border border-hairline rounded-lg shadow-lg z-50 py-1.5 max-h-[300px] overflow-y-auto">
+                    {topicConfigs.map((topic) => {
+                      const TopicIcon = topic.icon
+                      const isSelected = topic.id === selectedTopic
+                      return (
+                        <button
+                          key={topic.id}
+                          onClick={() => handleTopicChange(topic.id)}
+                          className={cn(
+                            "w-full flex items-center gap-2.5 px-3 py-2 hover:bg-canvas-soft transition-colors text-left",
+                            isSelected && "bg-canvas-soft"
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "w-6 h-6 rounded flex items-center justify-center shrink-0",
+                              isSelected
+                                ? "bg-primary text-on-primary"
+                                : "bg-canvas-soft-2 text-mute"
+                            )}
+                          >
+                            <TopicIcon size={12} />
+                          </div>
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <span
+                              className={cn(
+                                "text-[13px] font-medium truncate leading-normal",
+                                isSelected ? "text-ink" : "text-body"
+                              )}
+                            >
+                              {topic.label}
+                            </span>
+                            <span className="text-[10px] text-mute font-mono leading-none truncate">
+                              {topic.description}
+                            </span>
+                          </div>
+                          {isSelected && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="relative">
+                <button
+                  onClick={() => setIsTopicSelectorOpen(!isTopicSelectorOpen)}
+                  className="w-8 h-8 bg-primary rounded-sm flex items-center justify-center text-on-primary hover:bg-primary/90 transition-colors"
+                  title={currentTopic?.label || "Select Topic"}
+                  aria-label="Select topic"
+                >
+                  {currentTopic && <currentTopic.icon size={14} />}
+                </button>
+
+                {/* Collapsed Topic Dropdown */}
+                {isTopicSelectorOpen && (
+                  <div className="absolute top-full left-0 mt-1 bg-canvas border border-hairline rounded-lg shadow-lg z-50 py-1.5 w-[200px]">
+                    {topicConfigs.map((topic) => {
+                      const TopicIcon = topic.icon
+                      const isSelected = topic.id === selectedTopic
+                      return (
+                        <button
+                          key={topic.id}
+                          onClick={() => handleTopicChange(topic.id)}
+                          className={cn(
+                            "w-full flex items-center gap-2.5 px-3 py-2 hover:bg-canvas-soft transition-colors text-left",
+                            isSelected && "bg-canvas-soft"
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "w-6 h-6 rounded flex items-center justify-center shrink-0",
+                              isSelected
+                                ? "bg-primary text-on-primary"
+                                : "bg-canvas-soft-2 text-mute"
+                            )}
+                          >
+                            <TopicIcon size={12} />
+                          </div>
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <span
+                              className={cn(
+                                "text-[13px] font-medium truncate leading-normal",
+                                isSelected ? "text-ink" : "text-body"
+                              )}
+                            >
+                              {topic.label}
+                            </span>
+                            <span className="text-[10px] text-mute font-mono leading-none truncate">
+                              {topic.description}
+                            </span>
+                          </div>
+                          {isSelected && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
           <button
             onClick={toggleCollapse}
-            className={cn("p-1.5 hover:bg-canvas-soft border border-hairline hover:text-ink text-mute rounded transition-colors shrink-0", isCollapsed && "w-7 h-7 flex items-center justify-center")}
+            className={cn(
+              "p-1.5 hover:bg-canvas-soft border border-hairline hover:text-ink text-mute rounded transition-colors shrink-0",
+              isCollapsed && "w-7 h-7 flex items-center justify-center"
+            )}
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
@@ -119,8 +223,11 @@ export function Sidebar() {
 
         {/* Navigation Groups */}
         <div className="py-4 space-y-6">
-          {navigationGroups.map((group, groupIdx) => (
-            <div key={groupIdx} className={cn("space-y-1.5 px-3", isCollapsed && "px-1 text-center")}>
+          {currentTopic?.groups.map((group, groupIdx) => (
+            <div
+              key={groupIdx}
+              className={cn("space-y-1.5 px-3", isCollapsed && "px-1 text-center")}
+            >
               {!isCollapsed ? (
                 <h3 className="px-3.5 text-[10px] font-medium font-mono uppercase tracking-[0.08em] text-mute select-none">
                   {group.title}
@@ -164,7 +271,9 @@ export function Sidebar() {
                         )}
                         aria-hidden="true"
                       />
-                      {!isCollapsed && <span className="text-[13px] leading-none">{item.label}</span>}
+                      {!isCollapsed && (
+                        <span className="text-[13px] leading-none">{item.label}</span>
+                      )}
                     </Link>
                   )
                 })}
@@ -206,11 +315,29 @@ export function Sidebar() {
           </div>
         )}
 
+        {/* Settings Link */}
+        <div className={cn(isCollapsed && "flex justify-center")}>
+          <Link
+            href="#settings"
+            className={cn(
+              "flex items-center gap-2.5 px-3.5 py-1.5 rounded-sm transition-all duration-150 text-body hover:text-ink hover:bg-canvas-soft-2/50",
+              isCollapsed && "justify-center px-0"
+            )}
+            title={isCollapsed ? "Settings" : undefined}
+          >
+            <Settings size={15} className="text-mute shrink-0" aria-hidden="true" />
+            {!isCollapsed && <span className="text-[13px] leading-none">Settings</span>}
+          </Link>
+        </div>
+
         {/* Profile */}
         <div className="pt-1 flex flex-col gap-3">
           <div className={cn("flex items-center justify-between gap-3", isCollapsed && "justify-center")}>
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-full bg-canvas-soft-2 border border-hairline flex items-center justify-center text-ink font-sans font-semibold text-xs shrink-0" aria-hidden="true">
+              <div
+                className="w-7 h-7 rounded-full bg-canvas-soft-2 border border-hairline flex items-center justify-center text-ink font-sans font-semibold text-xs shrink-0"
+                aria-hidden="true"
+              >
                 K
               </div>
               {!isCollapsed && (
@@ -225,7 +352,10 @@ export function Sidebar() {
               )}
             </div>
             {!isCollapsed && (
-              <button className="text-mute hover:text-ink p-1 rounded focus-visible:ring-2 focus-visible:ring-black" aria-label="Open User Menu">
+              <button
+                className="text-mute hover:text-ink p-1 rounded focus-visible:ring-2 focus-visible:ring-black"
+                aria-label="Open User Menu"
+              >
                 <ChevronDown size={14} aria-hidden="true" />
               </button>
             )}

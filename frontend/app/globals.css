@@ -78,6 +78,12 @@
   .button-secondary-sm {
     @apply bg-canvas text-ink text-button-md font-medium rounded-pill px-4 h-9 inline-flex items-center justify-center border border-hairline transition-colors hover:bg-canvas-soft active:bg-canvas-soft-2 disabled:opacity-50 disabled:pointer-events-none;
   }
+  .button-action {
+    @apply bg-accent-blue text-white text-button-lg font-semibold rounded-pill px-6 h-12 inline-flex items-center justify-center shadow-md transition-all duration-200 hover:bg-link-deep hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .button-action-sm {
+    @apply bg-accent-blue text-white text-button-md font-semibold rounded-md px-4 h-9 inline-flex items-center justify-center shadow-sm transition-all duration-200 hover:bg-link-deep hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none;
+  }
   .tab-ghost {
     @apply bg-canvas text-ink text-body-sm font-normal rounded-pill px-4 py-1.5 inline-flex items-center justify-center transition-colors hover:bg-canvas-soft active:bg-canvas-soft-2;
   }
