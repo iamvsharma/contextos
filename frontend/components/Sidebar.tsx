@@ -8,6 +8,7 @@ import { useThemeStore } from "@/store/useThemeStore"
 import { topicConfigs, TopicId, getTopicConfig } from "@/lib/sidebar-config"
 import {
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
@@ -53,11 +54,16 @@ export function Sidebar() {
     toggleThemeMode,
     toggleGroupCollapsed,
     isGroupCollapsed,
+    enabledTopics,
+    toggleTopicEnabled,
   } = useThemeStore()
 
   const [isTopicSelectorOpen, setIsTopicSelectorOpen] = useState(false)
+  const [isConfiguringTopics, setIsConfiguringTopics] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const currentTopic = getTopicConfig(selectedTopic)
   const topicSelectorRef = useRef<HTMLDivElement>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   // Hydrate from localStorage after mount (client-only)
   useEffect(() => {
@@ -86,16 +92,26 @@ export function Sidebar() {
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [toggleCollapse])
 
-  // Close topic selector on click outside
+  // Close topic selector and user menu on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (topicSelectorRef.current && !topicSelectorRef.current.contains(event.target as Node)) {
         setIsTopicSelectorOpen(false)
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false)
+      }
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  // Reset configuring state when selector is closed
+  useEffect(() => {
+    if (!isTopicSelectorOpen) {
+      setIsConfiguringTopics(false)
+    }
+  }, [isTopicSelectorOpen])
 
   const handleTopicChange = (topicId: TopicId) => {
     setSelectedTopic(topicId)
@@ -147,8 +163,8 @@ export function Sidebar() {
   // Show skeleton during SSR / before hydration
   if (!hydrated) {
     return (
-      <aside className="bg-canvas text-ink flex flex-col justify-between shrink-0 border-r border-hairline min-h-screen font-sans w-[250px]">
-        <div className="flex flex-col flex-1">
+      <aside className="bg-canvas text-ink flex flex-col justify-between shrink-0 border-r border-hairline h-screen sticky top-0 font-sans w-[250px]">
+        <div className="h-[82vh] flex flex-col overflow-y-auto">
           <div className="px-4 py-3 border-b border-hairline flex items-center justify-between">
             <div className="flex items-center gap-2.5 flex-1">
               <div className="w-6 h-6 bg-canvas-soft-2 rounded-sm animate-pulse" />
@@ -178,12 +194,12 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "bg-canvas text-ink flex flex-col justify-between shrink-0 border-r border-hairline min-h-screen font-sans transition-all duration-300 ease-in-out",
+        "bg-canvas text-ink flex flex-col justify-between shrink-0 border-r border-hairline h-screen sticky top-0 font-sans transition-all duration-300 ease-in-out",
         isCollapsed ? "w-[70px]" : "w-[250px]"
       )}
       aria-label="Main Navigation"
     >
-      <div className="flex flex-col flex-1 overflow-y-auto">
+      <div className={cn("h-[82vh] flex flex-col", !isCollapsed ? "overflow-y-auto" : "overflow-visible")}>
         {/* Topic Selector + Collapse Button */}
         <div className="border-b border-hairline">
           {!isCollapsed ? (
@@ -204,24 +220,89 @@ export function Sidebar() {
                 </button>
 
                 {isTopicSelectorOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-canvas border border-hairline rounded-lg shadow-lg z-50 py-1 max-h-[320px] overflow-y-auto">
-                    {topicConfigs.map((topic) => {
-                      const TopicIcon = topic.icon
-                      const isSelected = topic.id === selectedTopic
-                      return (
-                        <button
-                          key={topic.id}
-                          onClick={() => handleTopicChange(topic.id)}
-                          className={cn("w-full flex items-center gap-2.5 px-3 py-2 hover:bg-canvas-soft transition-colors text-left", isSelected && "bg-canvas-soft")}
-                        >
-                          <div className={cn("w-6 h-6 rounded flex items-center justify-center shrink-0", isSelected ? "bg-primary text-on-primary" : "bg-canvas-soft-2 text-mute")}>
-                            <TopicIcon size={11} />
-                          </div>
-                          <span className={cn("text-[13px] font-medium truncate", isSelected ? "text-ink" : "text-body")}>{topic.label}</span>
-                          {isSelected && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
-                        </button>
-                      )
-                    })}
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-canvas border border-hairline rounded-lg shadow-lg z-50 py-1 max-h-[340px] overflow-y-auto min-w-[220px]">
+                    {!isConfiguringTopics ? (
+                      <>
+                        <div className="max-h-[260px] overflow-y-auto">
+                          {topicConfigs
+                            .filter((t) => enabledTopics.includes(t.id))
+                            .map((topic) => {
+                              const TopicIcon = topic.icon
+                              const isSelected = topic.id === selectedTopic
+                              return (
+                                <button
+                                  key={topic.id}
+                                  onClick={() => handleTopicChange(topic.id)}
+                                  className={cn("w-full flex items-center gap-2.5 px-3 py-2 hover:bg-canvas-soft transition-colors text-left", isSelected && "bg-canvas-soft")}
+                                >
+                                  <div className={cn("w-6 h-6 rounded flex items-center justify-center shrink-0", isSelected ? "bg-primary text-on-primary" : "bg-canvas-soft-2 text-mute")}>
+                                    <TopicIcon size={11} />
+                                  </div>
+                                  <span className="text-[13px] font-medium truncate text-ink">{topic.label}</span>
+                                  {isSelected && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+                                </button>
+                              )
+                            })}
+                        </div>
+                        <div className="border-t border-hairline mt-1 pt-1 px-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setIsConfiguringTopics(true)
+                            }}
+                            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-mute hover:text-ink hover:bg-canvas-soft rounded transition-colors text-left"
+                          >
+                            <Settings size={12} />
+                            <span>Configure Topics...</span>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-hairline">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setIsConfiguringTopics(false)
+                            }}
+                            className="p-1 hover:bg-canvas-soft rounded text-mute hover:text-ink transition-colors"
+                          >
+                            <ChevronLeft size={14} />
+                          </button>
+                          <span className="text-[11px] font-semibold font-mono uppercase tracking-wider text-mute">Configure Topics</span>
+                        </div>
+                        <div className="p-1.5 space-y-1 max-h-[260px] overflow-y-auto">
+                          {topicConfigs.map((topic) => {
+                            const TopicIcon = topic.icon
+                            const isEnabled = enabledTopics.includes(topic.id)
+                            const canToggle = !isEnabled || enabledTopics.length > 1
+                            return (
+                              <div
+                                key={topic.id}
+                                className="flex items-center justify-between gap-3 px-2 py-1.5 rounded hover:bg-canvas-soft-2/45 transition-colors"
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className="w-5 h-5 rounded bg-canvas-soft-2 flex items-center justify-center text-mute shrink-0">
+                                    <TopicIcon size={10} />
+                                  </div>
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="text-[12px] font-medium text-ink leading-none">{topic.label}</span>
+                                    <span className="text-[9px] text-mute truncate mt-0.5 max-w-[130px]">{topic.description}</span>
+                                  </div>
+                                </div>
+                                <input
+                                  type="checkbox"
+                                  checked={isEnabled}
+                                  disabled={!canToggle}
+                                  onChange={() => toggleTopicEnabled(topic.id)}
+                                  className="rounded border-hairline text-primary focus:ring-primary h-3.5 w-3.5 cursor-pointer accent-primary"
+                                />
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -250,24 +331,86 @@ export function Sidebar() {
                 </button>
 
                 {isTopicSelectorOpen && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-canvas border border-hairline rounded-lg shadow-lg z-50 py-1 w-[180px]">
-                    {topicConfigs.map((topic) => {
-                      const TopicIcon = topic.icon
-                      const isSelected = topic.id === selectedTopic
-                      return (
-                        <button
-                          key={topic.id}
-                          onClick={() => handleTopicChange(topic.id)}
-                          className={cn("w-full flex items-center gap-2.5 px-3 py-2 hover:bg-canvas-soft transition-colors text-left", isSelected && "bg-canvas-soft")}
-                        >
-                          <div className={cn("w-5 h-5 rounded flex items-center justify-center shrink-0", isSelected ? "bg-primary text-on-primary" : "bg-canvas-soft-2 text-mute")}>
-                            <TopicIcon size={10} />
-                          </div>
-                          <span className={cn("text-[12px] font-medium truncate", isSelected ? "text-ink" : "text-body")}>{topic.label}</span>
-                          {isSelected && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
-                        </button>
-                      )
-                    })}
+                  <div className="absolute top-0 left-full ml-2 bg-canvas border border-hairline rounded-lg shadow-lg z-50 py-1 w-[180px]">
+                    {!isConfiguringTopics ? (
+                      <>
+                        <div className="max-h-[220px] overflow-y-auto">
+                          {topicConfigs
+                            .filter((t) => enabledTopics.includes(t.id))
+                            .map((topic) => {
+                              const TopicIcon = topic.icon
+                              const isSelected = topic.id === selectedTopic
+                              return (
+                                <button
+                                  key={topic.id}
+                                  onClick={() => handleTopicChange(topic.id)}
+                                  className={cn("w-full flex items-center gap-2.5 px-3 py-2 hover:bg-canvas-soft transition-colors text-left", isSelected && "bg-canvas-soft")}
+                                >
+                                  <div className={cn("w-5 h-5 rounded flex items-center justify-center shrink-0", isSelected ? "bg-primary text-on-primary" : "bg-canvas-soft-2 text-mute")}>
+                                    <TopicIcon size={10} />
+                                  </div>
+                                  <span className={cn("text-[12px] font-medium truncate", isSelected ? "text-ink" : "text-body")}>{topic.label}</span>
+                                  {isSelected && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+                                </button>
+                              )
+                            })}
+                        </div>
+                        <div className="border-t border-hairline mt-1 pt-1 px-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setIsConfiguringTopics(true)
+                            }}
+                            className="w-full flex items-center justify-center gap-1.5 py-1 text-[11px] text-mute hover:text-ink hover:bg-canvas-soft rounded transition-colors"
+                          >
+                            <Settings size={11} />
+                            <span>Configure...</span>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-1 px-2 py-1 border-b border-hairline">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setIsConfiguringTopics(false)
+                            }}
+                            className="p-0.5 hover:bg-canvas-soft rounded text-mute hover:text-ink transition-colors"
+                          >
+                            <ChevronLeft size={12} />
+                          </button>
+                          <span className="text-[10px] font-semibold font-mono uppercase tracking-wider text-mute">Topics</span>
+                        </div>
+                        <div className="p-1 space-y-0.5 max-h-[200px] overflow-y-auto">
+                          {topicConfigs.map((topic) => {
+                            const TopicIcon = topic.icon
+                            const isEnabled = enabledTopics.includes(topic.id)
+                            const canToggle = !isEnabled || enabledTopics.length > 1
+                            return (
+                              <div
+                                key={topic.id}
+                                className="flex items-center justify-between gap-1.5 px-1.5 py-1 rounded hover:bg-canvas-soft transition-colors"
+                              >
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <div className="w-4 h-4 rounded bg-canvas-soft-2 flex items-center justify-center text-mute shrink-0">
+                                    <TopicIcon size={9} />
+                                  </div>
+                                  <span className="text-[11px] font-medium text-ink truncate leading-none">{topic.label}</span>
+                                </div>
+                                <input
+                                  type="checkbox"
+                                  checked={isEnabled}
+                                  disabled={!canToggle}
+                                  onChange={() => toggleTopicEnabled(topic.id)}
+                                  className="rounded border-hairline text-primary focus:ring-primary h-3 w-3 cursor-pointer accent-primary"
+                                />
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -452,18 +595,17 @@ export function Sidebar() {
       </div>
 
       {/* Sidebar Footer */}
-      <div className="p-4 space-y-3 shrink-0 bg-canvas border-t border-hairline">
+      <div className={cn("h-[18vh] p-4 flex flex-col justify-between shrink-0 bg-canvas border-t border-hairline", !isCollapsed ? "overflow-y-auto" : "overflow-visible")}>
         {!isCollapsed ? (
-          <div className="bg-canvas border border-hairline rounded-md p-4 flex flex-col gap-3 shadow-[0px_1px_1px_rgba(0,0,0,0.02)]">
+          <div className="bg-canvas border border-hairline rounded-md p-2.5 flex flex-col gap-2 shadow-[0px_1px_1px_rgba(0,0,0,0.02)]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <Sparkles size={14} className="text-warning-deep" />
-                <span className="text-[12px] font-medium text-ink">Upgrade to Pro</span>
+                <Sparkles size={12} className="text-warning-deep" />
+                <span className="text-[11px] font-medium text-ink">Upgrade to Pro</span>
               </div>
-              <span className="text-[10px] bg-warning-soft text-warning-deep border border-warning/10 px-1.5 py-0.5 rounded-full font-mono font-medium">NEW</span>
+              <span className="text-[9px] bg-warning-soft text-warning-deep border border-warning/10 px-1.5 py-0.5 rounded-full font-mono font-medium">NEW</span>
             </div>
-            <p className="text-[12px] text-body leading-relaxed">Unlock team collaboration, custom pipelines, and parallel preprocessors.</p>
-            <button className="button-primary-sm w-full py-1 h-8 rounded-sm text-[12px] font-medium">Start Free Trial</button>
+            <button className="button-primary-sm w-full py-1 h-7 rounded-sm text-[11px] font-medium">Start Free Trial</button>
           </div>
         ) : (
           <div className="flex justify-center">
@@ -473,22 +615,53 @@ export function Sidebar() {
           </div>
         )}
 
-        {/* Settings + Theme Toggle Row */}
-        <div className={cn("flex items-center gap-2", isCollapsed ? "flex-col" : "justify-between")}>
-          <Link href="#settings" className={cn("flex items-center gap-2.5 px-3.5 py-1.5 rounded-sm transition-all duration-150 text-body hover:text-ink hover:bg-canvas-soft-2/50", isCollapsed && "justify-center px-0")} title={isCollapsed ? "Settings" : undefined}>
-            <Settings size={15} className="text-mute shrink-0" />
-            {!isCollapsed && <span className="text-[13px] leading-none">Settings</span>}
-          </Link>
+        {/* Profile with User Dropdown */}
+        <div ref={userMenuRef} className="relative pt-1 flex flex-col gap-3">
+          {/* User Dropdown Menu */}
+          {isUserMenuOpen && (
+            <div className={cn(
+              "absolute z-50 py-1.5 flex flex-col gap-0.5 bg-canvas border border-hairline rounded-lg shadow-lg",
+              isCollapsed ? "bottom-0 left-full ml-2 w-[160px]" : "bottom-full left-0 right-0 mb-1 w-full"
+            )}>
+              <Link
+                href="#settings"
+                onClick={() => setIsUserMenuOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2 text-body hover:text-ink hover:bg-canvas-soft transition-colors text-[13px] font-medium"
+              >
+                <Settings size={14} className="text-mute shrink-0" />
+                <span>Settings</span>
+              </Link>
+              
+              <button
+                onClick={() => {
+                  toggleThemeMode();
+                  setIsUserMenuOpen(false);
+                }}
+                className="flex items-center gap-2.5 px-3 py-2 text-body hover:text-ink hover:bg-canvas-soft transition-colors text-left text-[13px] font-medium w-full"
+              >
+                {themeMode === "light" ? (
+                  <>
+                    <Moon size={14} className="text-mute shrink-0" />
+                    <span>Dark Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Sun size={14} className="text-mute shrink-0" />
+                    <span>Light Mode</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
 
-          <button onClick={toggleThemeMode} className={cn("flex items-center gap-2.5 px-3.5 py-1.5 rounded-sm transition-all duration-150 text-body hover:text-ink hover:bg-canvas-soft-2/50", isCollapsed && "justify-center px-0")} title={isCollapsed ? `Switch to ${themeMode === "light" ? "dark" : "light"} mode` : undefined}>
-            {themeMode === "light" ? <Moon size={15} className="text-mute shrink-0" /> : <Sun size={15} className="text-mute shrink-0" />}
-            {!isCollapsed && <span className="text-[13px] leading-none">{themeMode === "light" ? "Dark Mode" : "Light Mode"}</span>}
-          </button>
-        </div>
-
-        {/* Profile */}
-        <div className="pt-1 flex flex-col gap-3">
-          <div className={cn("flex items-center justify-between gap-3", isCollapsed && "justify-center")}>
+          <div
+            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            className={cn(
+              "flex items-center justify-between gap-3 cursor-pointer p-1 rounded-md hover:bg-canvas-soft transition-colors",
+              isCollapsed && "justify-center"
+            )}
+            title={isCollapsed ? "User Menu" : undefined}
+          >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="relative">
                 <div className="w-7 h-7 rounded-full bg-canvas-soft-2 border border-hairline flex items-center justify-center text-ink font-sans font-semibold text-xs shrink-0">K</div>
@@ -502,9 +675,7 @@ export function Sidebar() {
               )}
             </div>
             {!isCollapsed && (
-              <button className="text-mute hover:text-ink p-1 rounded focus-visible:ring-2 focus-visible:ring-black" aria-label="Open User Menu">
-                <ChevronDown size={14} />
-              </button>
+              <ChevronDown size={14} className={cn("text-mute transition-transform duration-200", isUserMenuOpen && "rotate-180")} />
             )}
           </div>
         </div>

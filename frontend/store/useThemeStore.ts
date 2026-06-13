@@ -40,6 +40,8 @@ interface ThemeStore {
   collapsedGroups: Record<string, string[]>
   toggleGroupCollapsed: (topicId: string, groupTitle: string) => void
   isGroupCollapsed: (topicId: string, groupTitle: string) => boolean
+  enabledTopics: TopicId[]
+  toggleTopicEnabled: (topic: TopicId) => void
   hydrateFromStorage: () => void
 }
 
@@ -85,6 +87,33 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
 
   selectedTopic: "nlp",
   setSelectedTopic: (topic) => set({ selectedTopic: topic }),
+
+  enabledTopics: ["nlp", "rag", "mcp", "automation", "agents", "agentic-ai", "prompt-engineering"],
+  toggleTopicEnabled: (topic) =>
+    set((state) => {
+      const isCurrentlyEnabled = state.enabledTopics.includes(topic)
+      let next: TopicId[]
+      if (isCurrentlyEnabled) {
+        if (state.enabledTopics.length <= 1) return {}
+        next = state.enabledTopics.filter((t) => t !== topic)
+        if (state.selectedTopic === topic) {
+          const remaining = next[0]
+          if (remaining) {
+            // Need to set timeout or direct callback for selectedTopic
+            setTimeout(() => {
+              state.setSelectedTopic(remaining)
+              localStorage.setItem("selected-topic", remaining)
+            }, 0)
+          }
+        }
+      } else {
+        next = [...state.enabledTopics, topic]
+      }
+      if (typeof window !== "undefined") {
+        localStorage.setItem("enabled-topics", JSON.stringify(next))
+      }
+      return { enabledTopics: next }
+    }),
 
   searchQuery: "",
   setSearchQuery: (query) => set({ searchQuery: query }),
@@ -155,12 +184,28 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
       const recent = localStorage.getItem("sidebar-recent")
       const notifications = localStorage.getItem("sidebar-notifications")
       const groups = localStorage.getItem("collapsed-groups")
+      const enabledTopics = localStorage.getItem("enabled-topics")
 
       const updates: Partial<ThemeStore> = { hydrated: true }
 
+      let activeEnabled: TopicId[] = ["nlp", "rag", "mcp", "automation", "agents", "agentic-ai", "prompt-engineering"]
+      if (enabledTopics) {
+        try {
+          const parsed = JSON.parse(enabledTopics)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            activeEnabled = parsed
+            updates.enabledTopics = parsed
+          }
+        } catch {}
+      } else {
+        updates.enabledTopics = activeEnabled
+      }
+
       if (collapsed === "true") updates.sidebarCollapsed = true
-      if (topic && ["nlp", "rag", "mcp", "automation", "agents", "agentic-ai", "prompt-engineering"].includes(topic)) {
+      if (topic && ["nlp", "rag", "mcp", "automation", "agents", "agentic-ai", "prompt-engineering"].includes(topic) && activeEnabled.includes(topic)) {
         updates.selectedTopic = topic
+      } else {
+        updates.selectedTopic = activeEnabled[0]
       }
       if (theme) {
         updates.themeMode = theme
