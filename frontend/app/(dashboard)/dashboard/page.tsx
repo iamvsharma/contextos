@@ -123,7 +123,7 @@ export default function DashboardPage() {
           Welcome back
         </h1>
         <p className="text-body-sm text-body mt-1">
-          Here's what's happening with your pipelines and data today.
+          Here&apos;s what&apos;s happening with your pipelines and data today.
         </p>
       </div>
 
