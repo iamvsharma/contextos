@@ -1,5 +1,7 @@
 import { Sidebar } from "@/components/Sidebar"
 import { Navbar } from "@/components/Navbar"
+import { SearchModal } from "@/components/SearchModal"
+import { FloatingQuickActions } from "@/components/FloatingQuickActions"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,6 +11,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Navbar />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
+      <SearchModal />
+      <FloatingQuickActions />
     </div>
   )
 }

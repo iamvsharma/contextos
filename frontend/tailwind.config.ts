@@ -51,6 +51,16 @@ const config: Config = {
         "semantic-warning": "#f5a623",
         "semantic-error": "#ee0000",
         "semantic-visited": "#8b5cf6",
+        dark: {
+          canvas: "#0a0a0a",
+          "canvas-soft": "#111111",
+          "canvas-soft-2": "#1a1a1a",
+          ink: "#ededed",
+          body: "#a1a1a1",
+          mute: "#666666",
+          hairline: "#2a2a2a",
+          "hairline-strong": "#444444",
+        },
       },
       fontFamily: {
         sans: [
@@ -116,18 +126,6 @@ const config: Config = {
       },
       maxWidth: {
         content: "1280px",
-      },
-      colors: {
-        dark: {
-          canvas: "#0a0a0a",
-          "canvas-soft": "#111111",
-          "canvas-soft-2": "#1a1a1a",
-          ink: "#ededed",
-          body: "#a1a1a1",
-          mute: "#666666",
-          hairline: "#2a2a2a",
-          "hairline-strong": "#444444",
-        },
       },
     },
   },

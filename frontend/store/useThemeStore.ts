@@ -13,6 +13,8 @@ export interface RecentItem {
 }
 
 interface ThemeStore {
+  hydrated: boolean
+  setHydrated: () => void
   colorMode: ColorMode
   toggleColorMode: () => void
   setColorMode: (mode: ColorMode) => void
@@ -38,25 +40,13 @@ interface ThemeStore {
   collapsedGroups: Record<string, string[]>
   toggleGroupCollapsed: (topicId: string, groupTitle: string) => void
   isGroupCollapsed: (topicId: string, groupTitle: string) => boolean
-}
-
-const loadFromStorage = <T>(key: string, fallback: T): T => {
-  if (typeof window === "undefined") return fallback
-  try {
-    const stored = localStorage.getItem(key)
-    return stored ? JSON.parse(stored) : fallback
-  } catch {
-    return fallback
-  }
-}
-
-const saveToStorage = (key: string, value: unknown) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(key, JSON.stringify(value))
-  }
+  hydrateFromStorage: () => void
 }
 
 export const useThemeStore = create<ThemeStore>((set, get) => ({
+  hydrated: false,
+  setHydrated: () => set({ hydrated: true }),
+
   colorMode: "colorful",
   toggleColorMode: () =>
     set((state) => ({
@@ -68,15 +58,15 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
   toggleThemeMode: () =>
     set((state) => {
       const next = state.themeMode === "light" ? "dark" : "light"
-      saveToStorage("theme-mode", next)
-      if (typeof document !== "undefined") {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("theme-mode", JSON.stringify(next))
         document.documentElement.classList.toggle("dark", next === "dark")
       }
       return { themeMode: next }
     }),
   setThemeMode: (mode) => {
-    saveToStorage("theme-mode", mode)
-    if (typeof document !== "undefined") {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("theme-mode", JSON.stringify(mode))
       document.documentElement.classList.toggle("dark", mode === "dark")
     }
     set({ themeMode: mode })
@@ -86,7 +76,9 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
   toggleSidebarCollapsed: () =>
     set((state) => {
       const next = !state.sidebarCollapsed
-      saveToStorage("sidebar-collapsed", String(next))
+      if (typeof window !== "undefined") {
+        localStorage.setItem("sidebar-collapsed", String(next))
+      }
       return { sidebarCollapsed: next }
     }),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
@@ -100,40 +92,42 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
   isSearchOpen: false,
   setSearchOpen: (open) => set({ isSearchOpen: open }),
 
-  favorites: loadFromStorage<string[]>("sidebar-favorites", []),
+  favorites: [],
   toggleFavorite: (href) =>
     set((state) => {
       const next = state.favorites.includes(href)
         ? state.favorites.filter((f) => f !== href)
         : [...state.favorites, href]
-      saveToStorage("sidebar-favorites", next)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("sidebar-favorites", JSON.stringify(next))
+      }
       return { favorites: next }
     }),
   isFavorite: (href) => get().favorites.includes(href),
 
-  recentItems: loadFromStorage<RecentItem[]>("sidebar-recent", []),
+  recentItems: [],
   addRecentItem: (href, label) =>
     set((state) => {
       const now = Date.now()
       const filtered = state.recentItems.filter((r) => r.href !== href)
       const next = [{ href, label, timestamp: now }, ...filtered].slice(0, 5)
-      saveToStorage("sidebar-recent", next)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("sidebar-recent", JSON.stringify(next))
+      }
       return { recentItems: next }
     }),
 
-  notifications: loadFromStorage<Record<string, number>>("sidebar-notifications", {
-    "#reports": 3,
-    "#history": 12,
-    "/automation/errors": 2,
-  }),
+  notifications: {},
   setNotification: (href, count) =>
     set((state) => {
       const next = { ...state.notifications, [href]: count }
-      saveToStorage("sidebar-notifications", next)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("sidebar-notifications", JSON.stringify(next))
+      }
       return { notifications: next }
     }),
 
-  collapsedGroups: loadFromStorage<Record<string, string[]>>("collapsed-groups", {}),
+  collapsedGroups: {},
   toggleGroupCollapsed: (topicId, groupTitle) =>
     set((state) => {
       const current = state.collapsedGroups[topicId] || []
@@ -141,11 +135,55 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
         ? current.filter((g) => g !== groupTitle)
         : [...current, groupTitle]
       const updated = { ...state.collapsedGroups, [topicId]: next }
-      saveToStorage("collapsed-groups", updated)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("collapsed-groups", JSON.stringify(updated))
+      }
       return { collapsedGroups: updated }
     }),
   isGroupCollapsed: (topicId, groupTitle) => {
     const groups = get().collapsedGroups[topicId] || []
     return groups.includes(groupTitle)
+  },
+
+  hydrateFromStorage: () => {
+    if (typeof window === "undefined") return
+    try {
+      const collapsed = localStorage.getItem("sidebar-collapsed")
+      const topic = localStorage.getItem("selected-topic") as TopicId | null
+      const theme = localStorage.getItem("theme-mode") as "light" | "dark" | null
+      const favorites = localStorage.getItem("sidebar-favorites")
+      const recent = localStorage.getItem("sidebar-recent")
+      const notifications = localStorage.getItem("sidebar-notifications")
+      const groups = localStorage.getItem("collapsed-groups")
+
+      const updates: Partial<ThemeStore> = { hydrated: true }
+
+      if (collapsed === "true") updates.sidebarCollapsed = true
+      if (topic && ["nlp", "rag", "mcp", "automation", "agents", "agentic-ai", "prompt-engineering"].includes(topic)) {
+        updates.selectedTopic = topic
+      }
+      if (theme) {
+        updates.themeMode = theme
+        document.documentElement.classList.toggle("dark", theme === "dark")
+      }
+      if (favorites) {
+        try { updates.favorites = JSON.parse(favorites) } catch {}
+      }
+      if (recent) {
+        try { updates.recentItems = JSON.parse(recent) } catch {}
+      }
+      if (notifications) {
+        try { updates.notifications = JSON.parse(notifications) } catch {}
+      } else {
+        updates.notifications = { "#reports": 3, "#history": 12, "/automation/errors": 2 }
+      }
+      if (groups) {
+        try { updates.collapsedGroups = JSON.parse(groups) } catch {}
+      }
+
+      set(updates)
+    } catch {
+      set({ hydrated: true })
+    }
   },
 }))
