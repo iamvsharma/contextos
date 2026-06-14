@@ -98,7 +98,7 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
         className="px-3 py-1.5 border border-hairline rounded-lg text-caption text-body-sm bg-canvas hover:bg-canvas-soft transition-colors flex items-center gap-2 shadow-sm focus-visible:ring-2 focus-visible:ring-ink"
       >
         <Calendar size={12} className="text-mute" aria-hidden="true" />
-        <span>{formatDateRange(value.preset, value.start, value.end)}</span>
+        <span suppressHydrationWarning>{formatDateRange(value.preset, value.start, value.end)}</span>
         <ChevronDown size={12} className={cn("text-mute transition-transform", open && "rotate-180")} />
       </button>
 

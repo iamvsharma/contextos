@@ -117,7 +117,7 @@ export default function DashboardPage() {
   const [activePieIndex, setActivePieIndex] = useState<number | null>(null)
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-6 p-8 pb-10">
       <div>
         <h1 className="text-headline text-ink font-semibold tracking-tight text-balance">
           Welcome back

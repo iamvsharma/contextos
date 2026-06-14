@@ -77,9 +77,9 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Develop",
         items: [
-          { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-          { href: "/pipeline", label: "Pipeline Builder", icon: GitBranch },
-          { href: "/playground", label: "API Playground", icon: Terminal },
+          { href: "/nlp/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { href: "/nlp/pipeline", label: "Pipeline Builder", icon: GitBranch },
+          { href: "/nlp/playground", label: "API Playground", icon: Terminal },
         ],
       },
       {
@@ -95,17 +95,17 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Data",
         items: [
-          { href: "/dataset", label: "Dataset Mode", icon: Database },
-          { href: "/datasets", label: "Datasets", icon: HardDrive },
-          { href: "/social", label: "Social Media Mode", icon: Globe },
+          { href: "/nlp/dataset", label: "Dataset Mode", icon: Database },
+          { href: "/nlp/datasets", label: "Datasets", icon: HardDrive },
+          { href: "/nlp/social", label: "Social Media Mode", icon: Globe },
         ],
       },
       {
         title: "Resources",
         items: [
-          { href: "#saved", label: "Saved Pipelines", icon: Bookmark },
-          { href: "#reports", label: "Reports", icon: BarChart3 },
-          { href: "#history", label: "History", icon: Clock },
+          { href: "/nlp/saved", label: "Saved Pipelines", icon: Bookmark },
+          { href: "/nlp/reports", label: "Reports", icon: BarChart3 },
+          { href: "/nlp/history", label: "History", icon: Clock },
         ],
       },
     ],
@@ -120,7 +120,7 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Develop",
         items: [
-          { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { href: "/rag/dashboard", label: "Dashboard", icon: LayoutDashboard },
           { href: "/rag/pipeline", label: "RAG Pipeline", icon: GitBranch },
           { href: "/rag/playground", label: "RAG Playground", icon: Terminal },
         ],
@@ -145,9 +145,9 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Resources",
         items: [
-          { href: "#saved", label: "Saved Configs", icon: Bookmark },
-          { href: "#history", label: "Query History", icon: Clock },
-          { href: "#compare", label: "Compare Results", icon: GitCompare },
+          { href: "/rag/saved", label: "Saved Configs", icon: Bookmark },
+          { href: "/rag/history", label: "Query History", icon: Clock },
+          { href: "/rag/compare", label: "Compare Results", icon: GitCompare },
         ],
       },
     ],
@@ -162,7 +162,7 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Develop",
         items: [
-          { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { href: "/mcp/dashboard", label: "Dashboard", icon: LayoutDashboard },
           { href: "/mcp/servers", label: "MCP Servers", icon: Server },
           { href: "/mcp/clients", label: "MCP Clients", icon: Monitor },
         ],
@@ -187,8 +187,8 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Resources",
         items: [
-          { href: "#saved", label: "Saved Configs", icon: Bookmark },
-          { href: "#history", label: "Activity Log", icon: Clock },
+          { href: "/mcp/saved", label: "Saved Configs", icon: Bookmark },
+          { href: "/mcp/history", label: "Activity Log", icon: Clock },
         ],
       },
     ],
@@ -203,7 +203,7 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Develop",
         items: [
-          { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { href: "/automation/dashboard", label: "Dashboard", icon: LayoutDashboard },
           { href: "/automation/workflows", label: "Workflow Builder", icon: GitBranch },
           { href: "/automation/trigger", label: "Trigger Config", icon: Zap },
         ],
@@ -228,8 +228,8 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Resources",
         items: [
-          { href: "#saved", label: "Saved Workflows", icon: Bookmark },
-          { href: "#history", label: "Run History", icon: Clock },
+          { href: "/automation/saved", label: "Saved Workflows", icon: Bookmark },
+          { href: "/automation/history", label: "Run History", icon: Clock },
         ],
       },
     ],
@@ -244,7 +244,7 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Develop",
         items: [
-          { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { href: "/agents/dashboard", label: "Dashboard", icon: LayoutDashboard },
           { href: "/agents/builder", label: "Agent Builder", icon: Bot },
           { href: "/agents/playground", label: "Agent Playground", icon: Terminal },
         ],
@@ -269,8 +269,8 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Resources",
         items: [
-          { href: "#saved", label: "Saved Agents", icon: Bookmark },
-          { href: "#history", label: "Session History", icon: Clock },
+          { href: "/agents/saved", label: "Saved Agents", icon: Bookmark },
+          { href: "/agents/history", label: "Session History", icon: Clock },
         ],
       },
     ],
@@ -285,7 +285,7 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Develop",
         items: [
-          { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { href: "/agentic/dashboard", label: "Dashboard", icon: LayoutDashboard },
           { href: "/agentic/orchestrator", label: "Orchestrator", icon: Workflow },
           { href: "/agentic/simulator", label: "Agent Simulator", icon: Play },
         ],
@@ -310,8 +310,8 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Resources",
         items: [
-          { href: "#saved", label: "Saved Configs", icon: Bookmark },
-          { href: "#history", label: "Execution History", icon: Clock },
+          { href: "/agentic/saved", label: "Saved Configs", icon: Bookmark },
+          { href: "/agentic/history", label: "Execution History", icon: Clock },
         ],
       },
     ],
@@ -326,7 +326,7 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Develop",
         items: [
-          { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { href: "/prompts/dashboard", label: "Dashboard", icon: LayoutDashboard },
           { href: "/prompts/builder", label: "Prompt Builder", icon: Wand2 },
           { href: "/prompts/playground", label: "Prompt Playground", icon: Terminal },
         ],
@@ -351,8 +351,8 @@ export const topicConfigs: TopicConfig[] = [
       {
         title: "Resources",
         items: [
-          { href: "#saved", label: "Saved Prompts", icon: Bookmark },
-          { href: "#history", label: "Version History", icon: Clock },
+          { href: "/prompts/saved", label: "Saved Prompts", icon: Bookmark },
+          { href: "/prompts/history", label: "Version History", icon: Clock },
         ],
       },
     ],
